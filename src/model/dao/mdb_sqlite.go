@@ -8,8 +8,6 @@ import (
 	"github.com/gookit/color"
 	"github.com/spf13/viper"
 
-	// "github.com/glebarez/sqlite"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
@@ -23,7 +21,7 @@ func SqliteInit() error {
 		dbFilename = filepath.Base(dbfile)
 	}
 	color.Green.Printf("[store_db] sqlite filename: %s\n", dbFilename)
-	Mdb, err = gorm.Open(sqlite.Open(dbFilename), &gorm.Config{
+	Mdb, err = openDB(dbFilename, &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix:   viper.GetString("sqlite_table_prefix"),
 			SingularTable: true,
