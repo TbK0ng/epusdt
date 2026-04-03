@@ -38,6 +38,8 @@ Epusdt
 ```
 
 ## 教程：
+- docker 运行教程 [docker-RUN](wiki/docker-RUN.md)
+- API 文档( 自定义汇率接口 ) [API](wiki/LEGACY_API_MIGRATION.md)
 - 宝塔运行`epusdt`教程👉🏻[宝塔运行epusdt](wiki/BT_RUN.md)
 - 不好意思我有洁癖，手动运行`epusdt`教程👉🏻[手动运行epusdt](wiki/manual_RUN.md)
 - 开发者接入`epusdt`文档👉🏻[开发者接入epusdt](wiki/API.md)
