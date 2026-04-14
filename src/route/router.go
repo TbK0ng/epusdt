@@ -77,11 +77,42 @@ func RegisterRoute(e *echo.Echo) {
 	epayV1 := paymentRoute.Group("/epay/v1")
 	epayV1.Match([]string{http.MethodPost, http.MethodGet}, "/order/create-transaction/submit.php", func(ctx echo.Context) error {
 		params := make(map[string]interface{})
-		for k, v := range ctx.QueryParams() {
-			params[k] = v[0]
+		copyParams := func(values map[string][]string) {
+			for k, v := range values {
+				if len(v) == 0 {
+					continue
+				}
+				params[k] = v[0]
+			}
 		}
 
-		signstr := params["sign"].(string)
+		copyParams(ctx.QueryParams())
+
+		formParams, err := ctx.FormParams()
+		if err != nil && ctx.Request().Method == http.MethodPost {
+			return comm.Ctrl.FailJson(ctx, fmt.Errorf("invalid epay form params: %w", err))
+		}
+		if err == nil {
+			copyParams(formParams)
+		}
+
+		getString := func(m map[string]interface{}, key string) string {
+			v, ok := m[key]
+			if !ok {
+				return ""
+			}
+			s, ok := v.(string)
+			if !ok {
+				return ""
+			}
+			return s
+		}
+
+		signstr := getString(params, "sign")
+		if signstr == "" {
+			return constant.SignatureErr
+		}
+
 		delete(params, "sign")
 		delete(params, "sign_type")
 
@@ -94,19 +125,6 @@ func RegisterRoute(e *echo.Echo) {
 		}
 		if checkSignature != signstr {
 			return constant.SignatureErr
-		}
-
-		// safely get string value from map
-		getString := func(m map[string]interface{}, key string) string {
-			v, ok := m[key]
-			if !ok {
-				return ""
-			}
-			s, ok := v.(string)
-			if !ok {
-				return ""
-			}
-			return s
 		}
 
 		money := getString(params, "money")
