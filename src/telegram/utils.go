@@ -7,6 +7,7 @@ import (
 
 	"github.com/assimon/luuu/model/mdb"
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/gagliardetto/solana-go"
 )
 
 // isValidEthereumAddress 校验 0x + 20 字节十六进制（主网收款）。
@@ -46,15 +47,6 @@ func isValidTronAddress(addr string) bool {
 	return string(checksum) == string(hash2[:4])
 }
 
-func isValidSolanaAddress(addr string) bool {
-	addr = strings.TrimSpace(addr)
-	if addr == "" {
-		return false
-	}
-	decoded := base58.Decode(addr)
-	return len(decoded) == 32
-}
-
 func isValidAddressByNetwork(network, addr string) bool {
 	switch strings.ToLower(strings.TrimSpace(network)) {
 	case mdb.NetworkTron:
@@ -75,4 +67,14 @@ func normalizeWalletAddressByNetwork(network, addr string) string {
 	default:
 		return strings.ToLower(addr)
 	}
+}
+
+// isValidSolanaAddress 校验 Solana Base58 地址是否合法（32 字节公钥）。
+func isValidSolanaAddress(addr string) bool {
+	addr = strings.TrimSpace(addr)
+	if len(addr) < 32 || len(addr) > 44 {
+		return false
+	}
+	_, err := solana.PublicKeyFromBase58(addr)
+	return err == nil
 }
