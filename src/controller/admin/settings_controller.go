@@ -3,6 +3,7 @@ package admin
 import (
 	"strings"
 
+	"github.com/assimon/luuu/model/dao"
 	"github.com/assimon/luuu/model/data"
 	"github.com/assimon/luuu/model/mdb"
 	"github.com/assimon/luuu/telegram"
@@ -111,14 +112,19 @@ func (c *BaseAdminController) UpsertSettings(ctx echo.Context) error {
 	}
 
 	// When telegram credentials are updated via settings, reload the
-	// command bot so operators don't need to restart the process.
+	// command bot so operators don't need to restart the process, and
+	// sync the notification_channels row so the notify dispatcher picks
+	// up the new values immediately.
 	telegramKeys := map[string]bool{
-		"system.telegram_bot_token": true,
-		"system.telegram_chat_id":   true,
+		"system.telegram_bot_token":               true,
+		"system.telegram_chat_id":                 true,
+		"system.telegram_payment_notice_enabled":  true,
+		"system.telegram_abnormal_notice_enabled": true,
 	}
 	for _, item := range req.Items {
 		if telegramKeys[strings.TrimSpace(item.Key)] {
 			telegram.ReloadBotAsync("settings upsert")
+			go dao.SyncTelegramChannelFromSettings()
 			break
 		}
 	}

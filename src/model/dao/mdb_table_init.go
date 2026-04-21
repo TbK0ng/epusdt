@@ -163,7 +163,17 @@ func seedTelegramChannelFromSettings() {
 	if count > 0 {
 		return
 	}
+	SyncTelegramChannelFromSettings()
+}
 
+// SyncTelegramChannelFromSettings reads the four Telegram keys from the
+// settings table and upserts the matching notification_channels row:
+//   - creates a new row when none exists yet
+//   - updates config+events on the first existing row when settings change
+//
+// This is called at startup (via seedTelegramChannelFromSettings) and by
+// the settings controller whenever any Telegram key is changed at runtime.
+func SyncTelegramChannelFromSettings() {
 	keys := []string{
 		"system.telegram_bot_token",
 		"system.telegram_chat_id",
@@ -172,7 +182,7 @@ func seedTelegramChannelFromSettings() {
 	}
 	var rows []mdb.Setting
 	if err := Mdb.Where("key IN ?", keys).Find(&rows).Error; err != nil {
-		color.Red.Printf("[store_db] seed telegram channel: read settings err=%s\n", err)
+		color.Red.Printf("[store_db] sync telegram channel: read settings err=%s\n", err)
 		return
 	}
 	m := make(map[string]string, len(rows))
@@ -183,12 +193,12 @@ func seedTelegramChannelFromSettings() {
 	botToken := strings.TrimSpace(m["system.telegram_bot_token"])
 	chatIDStr := strings.TrimSpace(m["system.telegram_chat_id"])
 	if botToken == "" || chatIDStr == "" {
-		return // No legacy telegram config to migrate.
+		return // No telegram config to sync.
 	}
 
 	chatID, err := strconv.ParseInt(chatIDStr, 10, 64)
 	if err != nil {
-		color.Red.Printf("[store_db] seed telegram channel: invalid chat_id=%q\n", chatIDStr)
+		color.Red.Printf("[store_db] sync telegram channel: invalid chat_id=%q\n", chatIDStr)
 		return
 	}
 
@@ -206,6 +216,25 @@ func seedTelegramChannelFromSettings() {
 		mdb.NotifyEventDailyReport:  false,
 	})
 
+	// Try to update an existing row first.
+	// Use Find (not First) to avoid GORM printing a spurious
+	// "record not found" log when the table is empty on first boot.
+	var existing mdb.NotificationChannel
+	Mdb.Model(&mdb.NotificationChannel{}).
+		Where("type = ?", mdb.NotificationTypeTelegram).
+		Order("id ASC").Limit(1).Find(&existing)
+	if existing.ID != 0 {
+		// Row exists — patch config and events.
+		if err2 := Mdb.Model(&existing).Updates(map[string]interface{}{
+			"config": string(configJSON),
+			"events": string(eventsJSON),
+		}).Error; err2 != nil {
+			color.Red.Printf("[store_db] sync telegram channel update err=%s\n", err2)
+		}
+		return
+	}
+
+	// No row yet — create one.
 	ch := mdb.NotificationChannel{
 		Type:    mdb.NotificationTypeTelegram,
 		Name:    "Telegram",
@@ -214,8 +243,8 @@ func seedTelegramChannelFromSettings() {
 		Enabled: true,
 	}
 	if err := Mdb.Create(&ch).Error; err != nil {
-		color.Red.Printf("[store_db] seed telegram channel err=%s\n", err)
+		color.Red.Printf("[store_db] sync telegram channel create err=%s\n", err)
 	} else {
-		color.Green.Printf("[store_db] migrated legacy telegram settings to notification_channels (id=%d)\n", ch.ID)
+		color.Green.Printf("[store_db] created telegram notification_channel from settings (id=%d)\n", ch.ID)
 	}
 }
