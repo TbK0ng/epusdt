@@ -28,7 +28,7 @@ import (
 	"text/template"
 	"time"
 
-	luluHttp "github.com/assimon/luuu/util/http"
+	luluHttp "github.com/GMWalletApp/epusdt/util/http"
 	"github.com/gookit/color"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"

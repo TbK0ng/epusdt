@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/assimon/luuu/util/http_client"
+	"github.com/GMWalletApp/epusdt/util/http_client"
 	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
 )

@@ -3,14 +3,14 @@ package bootstrap
 import (
 	"sync"
 
-	"github.com/assimon/luuu/config"
-	"github.com/assimon/luuu/model/dao"
-	"github.com/assimon/luuu/model/data"
-	"github.com/assimon/luuu/mq"
-	"github.com/assimon/luuu/task"
-	"github.com/assimon/luuu/telegram"
-	appjwt "github.com/assimon/luuu/util/jwt"
-	"github.com/assimon/luuu/util/log"
+	"github.com/GMWalletApp/epusdt/config"
+	"github.com/GMWalletApp/epusdt/model/dao"
+	"github.com/GMWalletApp/epusdt/model/data"
+	"github.com/GMWalletApp/epusdt/mq"
+	"github.com/GMWalletApp/epusdt/task"
+	"github.com/GMWalletApp/epusdt/telegram"
+	appjwt "github.com/GMWalletApp/epusdt/util/jwt"
+	"github.com/GMWalletApp/epusdt/util/log"
 	"github.com/gookit/color"
 )
 
